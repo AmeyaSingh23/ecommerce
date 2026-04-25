@@ -3,12 +3,24 @@ const Product = require('../models/Product');
 // GET /api/products
 const getProducts = async (req, res) => {
   try {
-    const products = await Product.find();
-    res.json(products);
+    const { search, category } = req.query
+
+    const filter = {}
+
+    if (search) {
+      filter.name = { $regex: search, $options: 'i' }
+    }
+
+    if (category && category !== 'all') {
+      filter.category = { $regex: category, $options: 'i' }
+    }
+
+    const products = await Product.find(filter)
+    res.json(products)
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: err.message })
   }
-};
+}
 
 // GET /api/products/:id
 const getProductById = async (req, res) => {
