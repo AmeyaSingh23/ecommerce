@@ -10,7 +10,9 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.CLIENT_URL || '*',
+}))
 app.use(express.json()); // parses incoming JSON request bodies
 
 // Test route
