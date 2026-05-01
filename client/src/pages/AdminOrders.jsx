@@ -53,7 +53,7 @@ const AdminOrders = () => {
                 <td style={styles.td}><span style={{ ...styles.badge, backgroundColor: order.isPaid ? '#27ae60' : '#e74c3c' }}>{order.isPaid ? 'Paid' : 'Pending'}</span></td>
                 <td style={styles.td}><span style={{ ...styles.badge, backgroundColor: order.isDelivered ? '#27ae60' : '#e67e22' }}>{order.isDelivered ? 'Delivered' : 'Pending'}</span></td>
                 <td style={styles.td}>
-                  {!order.isDelivered && (
+                  {order.isPaid && !order.isDelivered && (
                     <button style={styles.deliverBtn} onClick={() => deliverHandler(order._id)}>
                       Mark Delivered
                     </button>

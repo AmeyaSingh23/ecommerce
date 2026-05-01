@@ -30,26 +30,9 @@ const Checkout = () => {
     e.preventDefault()
     setLoading(true)
     try {
-      // Step 1: Create order in DB
-      const orderItems = cartItems.map(item => ({
-        product: item.product,
-        name: item.name,
-        image: item.image,
-        price: item.price,
-        quantity: item.quantity,
-      }))
-
-      const { data: order } = await axios.post('/orders', {
-        orderItems,
-        shippingAddress: { address, city, postalCode, state },
-        paymentMethod: 'Razorpay',
-        totalPrice,
-      })
-
-      // Step 2: Create Razorpay payment order
+      // Step 1: Create Razorpay payment order only
       const { data: razorpayOrder } = await axios.post('/payment/create-order', { totalPrice })
 
-      // Step 3: Load Razorpay script and open checkout
       const loaded = await loadRazorpay()
       if (!loaded) {
         toast.error('Razorpay failed to load')
@@ -66,18 +49,35 @@ const Checkout = () => {
         order_id: razorpayOrder.id,
         handler: async (response) => {
           try {
-            // Step 4: Verify payment
+            // Step 2: Verify payment
             await axios.post('/payment/verify', {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
             })
 
-            // Step 5: Mark order as paid
-            await axios.put(`/orders/${order._id}/pay`, {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
+            // Step 3: Only now create order in DB
+            const orderItems = cartItems.map(item => ({
+              product: item.product,
+              name: item.name,
+              image: item.image,
+              price: item.price,
+              quantity: item.quantity,
+            }))
+
+            const { data: order } = await axios.post('/orders', {
+              orderItems,
+              shippingAddress: { address, city, postalCode, state },
+              paymentMethod: 'Razorpay',
+              totalPrice,
+              isPaid: true,
+              paidAt: Date.now(),
+              paymentResult: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                status: 'paid',
+              },
             })
 
             clearCart()

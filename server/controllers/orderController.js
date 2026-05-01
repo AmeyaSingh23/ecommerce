@@ -3,10 +3,10 @@ const Order = require('../models/Order');
 // POST /api/orders
 const createOrder = async (req, res) => {
   try {
-    const { orderItems, shippingAddress, paymentMethod, totalPrice } = req.body;
+    const { orderItems, shippingAddress, paymentMethod, totalPrice, isPaid, paidAt, paymentResult } = req.body
 
     if (!orderItems || orderItems.length === 0)
-      return res.status(400).json({ message: 'No order items' });
+      return res.status(400).json({ message: 'No order items' })
 
     const order = await Order.create({
       user: req.user._id,
@@ -14,13 +14,16 @@ const createOrder = async (req, res) => {
       shippingAddress,
       paymentMethod,
       totalPrice,
-    });
+      isPaid: isPaid || false,
+      paidAt: paidAt || null,
+      paymentResult: paymentResult || {},
+    })
 
-    res.status(201).json(order);
+    res.status(201).json(order)
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: err.message })
   }
-};
+}
 
 // GET /api/orders/my
 const getMyOrders = async (req, res) => {
@@ -81,18 +84,20 @@ const updateOrderToPaid = async (req, res) => {
 // PUT /api/orders/:id/deliver  (admin)
 const updateOrderToDelivered = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ message: 'Order not found' });
+    const order = await Order.findById(req.params.id)
+    if (!order) return res.status(404).json({ message: 'Order not found' })
 
-    order.isDelivered = true;
-    order.deliveredAt = Date.now();
-    order.status = 'delivered';
+    if (!order.isPaid) return res.status(400).json({ message: 'Cannot deliver an unpaid order' })
 
-    const updated = await order.save();
-    res.json(updated);
+    order.isDelivered = true
+    order.deliveredAt = Date.now()
+    order.status = 'delivered'
+
+    const updated = await order.save()
+    res.json(updated)
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: err.message })
   }
-};
+}
 
 module.exports = { createOrder, getMyOrders, getOrderById, getAllOrders, updateOrderToPaid, updateOrderToDelivered };
