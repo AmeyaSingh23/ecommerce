@@ -28,12 +28,15 @@ const createOrder = async (req, res) => {
 // GET /api/orders/my
 const getMyOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user._id });
-    res.json(orders);
+    const orders = await Order.find({
+      user: req.user._id,
+      status: { $ne: 'pending_payment' }
+    })
+    res.json(orders)
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: err.message })
   }
-};
+}
 
 // GET /api/orders/:id
 const getOrderById = async (req, res) => {
@@ -62,24 +65,25 @@ const getAllOrders = async (req, res) => {
 // PUT /api/orders/:id/pay
 const updateOrderToPaid = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ message: 'Order not found' });
+    const order = await Order.findById(req.params.id)
+    if (!order) return res.status(404).json({ message: 'Order not found' })
 
-    order.isPaid = true;
-    order.paidAt = Date.now();
+    order.isPaid = true
+    order.paidAt = Date.now()
+    order.status = 'pending'
     order.paymentResult = {
       razorpay_order_id: req.body.razorpay_order_id,
       razorpay_payment_id: req.body.razorpay_payment_id,
       razorpay_signature: req.body.razorpay_signature,
       status: 'paid',
-    };
+    }
 
-    const updated = await order.save();
-    res.json(updated);
+    const updated = await order.save()
+    res.json(updated)
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: err.message })
   }
-};
+}
 
 // PUT /api/orders/:id/deliver  (admin)
 const updateOrderToDelivered = async (req, res) => {
