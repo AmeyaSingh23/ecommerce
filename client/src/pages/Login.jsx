@@ -17,7 +17,7 @@ const Login = () => {
     try {
       const { data } = await axios.post('/users/login', { email, password })
       login(data)
-      toast.success('Logged in')
+      toast.success('Welcome back!')
       navigate('/')
     } catch (err) {
       toast.error(err.response?.data?.message || 'Login failed')
@@ -27,28 +27,53 @@ const Login = () => {
   }
 
   return (
-    <div style={styles.container}>
-      <Toaster />
-      <form onSubmit={submitHandler} style={styles.form}>
-        <h2 style={styles.title}>Login</h2>
-        <input style={styles.input} type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
-        <input style={styles.input} type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
-        <button style={styles.button} type="submit" disabled={loading}>
-          {loading ? 'Logging in...' : 'Login'}
-        </button>
-        <p style={styles.link}>Don't have an account? <Link to="/register">Register</Link></p>
-      </form>
+    <div className="auth-page">
+      <Toaster position="bottom-right" toastOptions={{ style: { fontFamily: 'DM Sans, sans-serif', fontSize: '0.9rem' } }} />
+      <div className="auth-card">
+        <div className="auth-card__header">
+          <span className="auth-card__brand">Vendora</span>
+          <h1 className="auth-card__title">Sign In</h1>
+          <p className="auth-card__sub">Welcome back — let's pick up where you left off.</p>
+        </div>
+
+        <form onSubmit={submitHandler} className="auth-card__form">
+          <div className="form-group">
+            <label className="form-label" htmlFor="login-email">Email Address</label>
+            <input
+              id="login-email"
+              className="input-field"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              autoComplete="email"
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="login-password">Password</label>
+            <input
+              id="login-password"
+              className="input-field"
+              type="password"
+              placeholder="Your password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              autoComplete="current-password"
+              required
+            />
+          </div>
+          <button className="btn btn-primary btn-full btn-lg" type="submit" disabled={loading}>
+            {loading ? 'Signing in…' : 'Sign In'}
+          </button>
+        </form>
+
+        <p className="auth-card__footer">
+          Don't have an account? <Link to="/register">Create one</Link>
+        </p>
+      </div>
     </div>
   )
 }
 
-const styles = {
-  container: { display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: '#f5f5f5' },
-  form: { backgroundColor: '#fff', padding: 'clamp(1.5rem, 4vw, 2.5rem)', borderRadius: '8px', boxShadow: '0 2px 12px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', gap: '1rem', width: 'clamp(280px, 90vw, 400px)' },
-  title: { margin: 0, fontSize: 'clamp(1.3rem, 3vw, 1.8rem)', textAlign: 'center' },
-  input: { padding: 'clamp(0.5rem, 1.5vw, 0.75rem)', fontSize: 'clamp(0.85rem, 2vw, 1rem)', border: '1px solid #ddd', borderRadius: '4px', outline: 'none' },
-  button: { padding: 'clamp(0.5rem, 1.5vw, 0.75rem)', backgroundColor: '#222', color: '#fff', border: 'none', borderRadius: '4px', fontSize: 'clamp(0.85rem, 2vw, 1rem)', cursor: 'pointer' },
-  link: { textAlign: 'center', fontSize: 'clamp(0.8rem, 1.8vw, 0.9rem)', margin: 0 },
-}
-
-export default Login
+export default Login

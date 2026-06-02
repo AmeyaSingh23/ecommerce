@@ -22,32 +22,58 @@ const MyOrders = () => {
     fetch()
   }, [])
 
-  if (loading) return <p style={styles.center}>Loading...</p>
-
   return (
-    <div style={styles.page}>
-      <Toaster />
-      <h1 style={styles.heading}>My Orders</h1>
-      {orders.length === 0 ? (
-        <p style={styles.center}>No orders yet.</p>
+    <div className="page-wrapper">
+      <Toaster position="bottom-right" toastOptions={{ style: { fontFamily: 'DM Sans, sans-serif', fontSize: '0.9rem' } }} />
+      <div className="page-header">
+        <h1 className="page-header__title">My Orders</h1>
+      </div>
+
+      {loading ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="skeleton" style={{ height: '56px', borderRadius: 'var(--radius-md)' }} />
+          ))}
+        </div>
+      ) : orders.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-state__icon">📦</div>
+          <p className="empty-state__title">No orders yet</p>
+          <p className="empty-state__text">Your completed orders will appear here.</p>
+          <button className="btn btn-primary" onClick={() => navigate('/')}>Start Shopping</button>
+        </div>
       ) : (
-        <div style={styles.tableWrapper}>
-          <table style={styles.table}>
+        <div className="table-wrapper">
+          <table className="data-table">
             <thead>
               <tr>
-                {['Order ID', 'Date', 'Total', 'Paid', 'Delivered'].map(h => (
-                  <th key={h} style={styles.th}>{h}</th>
-                ))}
+                <th>Order ID</th>
+                <th>Date</th>
+                <th>Total</th>
+                <th>Payment</th>
+                <th>Delivery</th>
               </tr>
             </thead>
             <tbody>
               {orders.map(order => (
-                <tr key={order._id} style={styles.row} onClick={() => navigate(`/order/${order._id}`)}>
-                  <td style={styles.td}><span style={styles.id}>{order._id}</span></td>
-                  <td style={styles.td}>{new Date(order.createdAt).toLocaleDateString()}</td>
-                  <td style={styles.td}>₹{order.totalPrice.toLocaleString()}</td>
-                  <td style={styles.td}><span style={{ ...styles.badge, backgroundColor: order.isPaid ? '#27ae60' : '#e74c3c' }}>{order.isPaid ? 'Paid' : 'Pending'}</span></td>
-                  <td style={styles.td}><span style={{ ...styles.badge, backgroundColor: order.isDelivered ? '#27ae60' : '#e67e22' }}>{order.isDelivered ? 'Delivered' : 'Pending'}</span></td>
+                <tr
+                  key={order._id}
+                  className="clickable"
+                  onClick={() => navigate(`/order/${order._id}`)}
+                >
+                  <td><span className="mono">{order._id.slice(-8).toUpperCase()}</span></td>
+                  <td>{new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                  <td style={{ fontWeight: 600 }}>₹{order.totalPrice.toLocaleString('en-IN')}</td>
+                  <td>
+                    <span className={`badge ${order.isPaid ? 'badge-success' : 'badge-pending'}`}>
+                      {order.isPaid ? 'Paid' : 'Pending'}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`badge ${order.isDelivered ? 'badge-success' : 'badge-neutral'}`}>
+                      {order.isDelivered ? 'Delivered' : 'Processing'}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -58,17 +84,4 @@ const MyOrders = () => {
   )
 }
 
-const styles = {
-  page: { padding: 'clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 2rem)' },
-  heading: { fontSize: 'clamp(1.3rem, 3vw, 2rem)', marginBottom: '1.5rem' },
-  tableWrapper: { overflowX: 'auto' },
-  table: { width: '100%', borderCollapse: 'collapse', backgroundColor: '#fff', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' },
-  th: { textAlign: 'left', padding: 'clamp(0.6rem, 1.5vw, 0.85rem) clamp(0.75rem, 2vw, 1rem)', backgroundColor: '#222', color: '#fff', fontSize: 'clamp(0.8rem, 1.8vw, 0.9rem)', whiteSpace: 'nowrap' },
-  row: { cursor: 'pointer', borderBottom: '1px solid #f0f0f0' },
-  td: { padding: 'clamp(0.6rem, 1.5vw, 0.85rem) clamp(0.75rem, 2vw, 1rem)', fontSize: 'clamp(0.78rem, 1.8vw, 0.9rem)', color: '#333' },
-  id: { fontFamily: 'monospace', fontSize: 'clamp(0.7rem, 1.5vw, 0.8rem)', color: '#666' },
-  badge: { color: '#fff', padding: '2px 10px', borderRadius: '12px', fontSize: 'clamp(0.7rem, 1.5vw, 0.8rem)', whiteSpace: 'nowrap' },
-  center: { textAlign: 'center', marginTop: '2rem' },
-}
-
-export default MyOrders
+export default MyOrders
