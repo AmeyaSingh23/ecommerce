@@ -3,6 +3,7 @@ import axios from '../api/axios'
 import toast, { Toaster } from 'react-hot-toast'
 
 const initialForm = { name: '', description: '', price: '', category: '', stock: '', image: '' }
+const CATEGORIES = ['Electronics', 'Clothing', 'Books', 'Home', 'Sports', 'Other']
 
 const AdminProducts = () => {
   const [products, setProducts] = useState([])
@@ -60,10 +61,7 @@ const AdminProducts = () => {
 
   const updateStock = async (id, currentStock, delta) => {
     const newStock = currentStock + delta
-    if (newStock < 0) {
-      toast.error('Stock cannot be negative')
-      return
-    }
+    if (newStock < 0) { toast.error('Stock cannot be negative'); return }
     try {
       const { data } = await axios.put(`/products/${id}`, { stock: newStock })
       setProducts(prev => prev.map(p => p._id === id ? { ...p, stock: data.stock } : p))
@@ -72,99 +70,104 @@ const AdminProducts = () => {
     }
   }
 
-  if (loading) return <p style={styles.center}>Loading...</p>
-
   return (
-    <div style={styles.page}>
-      <Toaster />
-      <h1 style={styles.heading}>Manage Products</h1>
+    <div className="page-wrapper">
+      <Toaster position="bottom-right" toastOptions={{ style: { fontFamily: 'DM Sans, sans-serif', fontSize: '0.9rem' } }} />
 
-      <form onSubmit={submitHandler} style={styles.form}>
-        <h2 style={styles.subheading}>Add New Product</h2>
-        <div style={styles.grid}>
-          {[
-            { placeholder: 'Name', key: 'name', type: 'text' },
-            { placeholder: 'Category', key: 'category', type: 'text' },
-            { placeholder: 'Price', key: 'price', type: 'number' },
-            { placeholder: 'Stock', key: 'stock', type: 'number' },
-            { placeholder: 'Image URL (optional)', key: 'image', type: 'text' },
-          ].map(field => (
-            <input
-              key={field.key}
-              style={styles.input}
-              type={field.type}
-              placeholder={field.placeholder}
-              value={form[field.key]}
-              onChange={e => setForm(prev => ({ ...prev, [field.key]: e.target.value }))}
-              required={field.key !== 'image'}
-            />
-          ))}
+      <div className="page-header">
+        <p className="page-header__eyebrow">Admin</p>
+        <h1 className="page-header__title">Manage Products</h1>
+      </div>
+
+      {/* Add Product Form */}
+      <form onSubmit={submitHandler} className="admin-form">
+        <h2 className="heading-sm">Add New Product</h2>
+        <hr className="divider" />
+        <div className="admin-form__grid">
+          <div className="form-group">
+            <label className="form-label">Name</label>
+            <input className="input-field" type="text" placeholder="Product name" value={form.name}
+              onChange={e => setForm(prev => ({ ...prev, name: e.target.value }))} required />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Category</label>
+            <select className="select-field" value={form.category}
+              onChange={e => setForm(prev => ({ ...prev, category: e.target.value }))} required>
+              <option value="">Select category</option>
+              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Price (₹)</label>
+            <input className="input-field" type="number" min="0" placeholder="0" value={form.price}
+              onChange={e => setForm(prev => ({ ...prev, price: e.target.value }))} required />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Stock</label>
+            <input className="input-field" type="number" min="0" placeholder="0" value={form.stock}
+              onChange={e => setForm(prev => ({ ...prev, stock: e.target.value }))} required />
+          </div>
+          <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+            <label className="form-label">Image URL <span className="text-muted">(optional)</span></label>
+            <input className="input-field" type="text" placeholder="https://..." value={form.image}
+              onChange={e => setForm(prev => ({ ...prev, image: e.target.value }))} />
+          </div>
         </div>
-        <textarea
-          style={styles.textarea}
-          placeholder="Description"
-          value={form.description}
-          onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
-          required
-        />
-        <button style={styles.button} type="submit" disabled={submitting}>
-          {submitting ? 'Adding...' : 'Add Product'}
-        </button>
+        <div className="form-group">
+          <label className="form-label">Description</label>
+          <textarea className="input-field" placeholder="Product description…" value={form.description}
+            onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))} required />
+        </div>
+        <div>
+          <button className="btn btn-primary" type="submit" disabled={submitting}>
+            {submitting ? 'Adding…' : 'Add Product'}
+          </button>
+        </div>
       </form>
 
-      <div style={styles.tableWrapper}>
-        <table style={styles.table}>
-          <thead>
-            <tr>
-              {['Name', 'Category', 'Price', 'Stock', 'Action'].map(h => (
-                <th key={h} style={styles.th}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {products.map(product => (
-              <tr key={product._id} style={styles.row}>
-                <td style={styles.td}>{product.name}</td>
-                <td style={styles.td}>{product.category}</td>
-                <td style={styles.td}>₹{product.price.toLocaleString()}</td>
-                <td style={styles.td}>
-                  <div style={styles.stockControl}>
-                    <button style={styles.stockBtn} onClick={() => updateStock(product._id, product.stock, -1)}>−</button>
-                    <span style={styles.stockNum}>{product.stock}</span>
-                    <button style={styles.stockBtn} onClick={() => updateStock(product._id, product.stock, 1)}>+</button>
-                  </div>
-                </td>
-                <td style={styles.td}>
-                  <button style={styles.deleteBtn} onClick={() => deleteHandler(product._id)}>Delete</button>
-                </td>
+      {/* Products Table */}
+      {loading ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="skeleton" style={{ height: '52px', borderRadius: 'var(--radius-md)' }} />
+          ))}
+        </div>
+      ) : (
+        <div className="table-wrapper">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {products.map(product => (
+                <tr key={product._id}>
+                  <td style={{ fontWeight: 500 }}>{product.name}</td>
+                  <td><span className="badge badge-neutral">{product.category}</span></td>
+                  <td style={{ fontVariantNumeric: 'tabular-nums' }}>₹{product.price.toLocaleString('en-IN')}</td>
+                  <td>
+                    <div className="stock-control">
+                      <button className="stock-btn" onClick={() => updateStock(product._id, product.stock, -1)}>−</button>
+                      <span className="stock-num">{product.stock}</span>
+                      <button className="stock-btn" onClick={() => updateStock(product._id, product.stock, 1)}>+</button>
+                    </div>
+                  </td>
+                  <td>
+                    <button className="btn btn-danger btn-sm" onClick={() => deleteHandler(product._id)}>Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }
 
-const styles = {
-  page: { padding: 'clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 2rem)' },
-  heading: { fontSize: 'clamp(1.3rem, 3vw, 2rem)', marginBottom: '1.5rem' },
-  form: { backgroundColor: '#fff', padding: 'clamp(1rem, 3vw, 1.5rem)', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.07)', marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' },
-  subheading: { margin: 0, fontSize: 'clamp(1rem, 2.5vw, 1.2rem)' },
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(clamp(160px, 20vw, 220px), 1fr))', gap: '0.75rem' },
-  input: { padding: 'clamp(0.5rem, 1.5vw, 0.7rem)', fontSize: 'clamp(0.82rem, 2vw, 0.95rem)', border: '1px solid #ddd', borderRadius: '4px', outline: 'none' },
-  textarea: { padding: 'clamp(0.5rem, 1.5vw, 0.7rem)', fontSize: 'clamp(0.82rem, 2vw, 0.95rem)', border: '1px solid #ddd', borderRadius: '4px', outline: 'none', minHeight: '80px', resize: 'vertical' },
-  button: { padding: 'clamp(0.6rem, 1.5vw, 0.75rem)', backgroundColor: '#222', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: 'clamp(0.85rem, 2vw, 1rem)', alignSelf: 'flex-start' },
-  tableWrapper: { overflowX: 'auto' },
-  table: { width: '100%', borderCollapse: 'collapse', backgroundColor: '#fff', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' },
-  th: { textAlign: 'left', padding: 'clamp(0.6rem, 1.5vw, 0.85rem) clamp(0.75rem, 2vw, 1rem)', backgroundColor: '#222', color: '#fff', fontSize: 'clamp(0.8rem, 1.8vw, 0.9rem)', whiteSpace: 'nowrap' },
-  row: { borderBottom: '1px solid #f0f0f0' },
-  td: { padding: 'clamp(0.6rem, 1.5vw, 0.85rem) clamp(0.75rem, 2vw, 1rem)', fontSize: 'clamp(0.78rem, 1.8vw, 0.9rem)', color: '#333' },
-  stockControl: { display: 'flex', alignItems: 'center', gap: '0.5rem' },
-  stockBtn: { width: '28px', height: '28px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: '#f5f5f5', cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  stockNum: { minWidth: '30px', textAlign: 'center', fontWeight: '600' },
-  deleteBtn: { backgroundColor: '#e74c3c', color: '#fff', border: 'none', padding: '0.3rem 0.75rem', borderRadius: '4px', cursor: 'pointer', fontSize: 'clamp(0.75rem, 1.8vw, 0.85rem)' },
-  center: { textAlign: 'center', marginTop: '2rem' },
-}
-
-export default AdminProducts
+export default AdminProducts

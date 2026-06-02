@@ -6,81 +6,103 @@ const AdminOrders = () => {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const fetchOrders = async () => {
-    try {
-      const { data } = await axios.get('/orders')
-      setOrders(data)
-    } catch {
-      toast.error('Failed to load orders')
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    const fetch = async () => {
+      try {
+        const { data } = await axios.get('/orders')
+        setOrders(data)
+      } catch {
+        toast.error('Failed to load orders')
+      } finally {
+        setLoading(false)
+      }
     }
-  }
+    fetch()
+  }, [])
 
-  useEffect(() => { fetchOrders() }, [])
-
-  const deliverHandler = async (id) => {
+  const markDelivered = async (id) => {
     try {
-      await axios.put(`/orders/${id}/deliver`)
+      const { data } = await axios.put(`/orders/${id}/deliver`)
+      setOrders(prev => prev.map(o => o._id === id ? { ...o, isDelivered: data.isDelivered, deliveredAt: data.deliveredAt } : o))
       toast.success('Marked as delivered')
-      fetchOrders()
     } catch {
       toast.error('Failed to update order')
     }
   }
 
-  if (loading) return <p style={styles.center}>Loading...</p>
-
   return (
-    <div style={styles.page}>
-      <Toaster />
-      <h1 style={styles.heading}>All Orders</h1>
-      <div style={styles.tableWrapper}>
-        <table style={styles.table}>
-          <thead>
-            <tr>
-              {['Order ID', 'User', 'Total', 'Paid', 'Delivered', 'Action'].map(h => (
-                <th key={h} style={styles.th}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map(order => (
-              <tr key={order._id} style={styles.row}>
-                <td style={styles.td}><span style={styles.id}>{order._id}</span></td>
-                <td style={styles.td}>{order.user?.name}<br /><span style={styles.email}>{order.user?.email}</span></td>
-                <td style={styles.td}>₹{order.totalPrice.toLocaleString()}</td>
-                <td style={styles.td}><span style={{ ...styles.badge, backgroundColor: order.isPaid ? '#27ae60' : '#e74c3c' }}>{order.isPaid ? 'Paid' : 'Pending'}</span></td>
-                <td style={styles.td}><span style={{ ...styles.badge, backgroundColor: order.isDelivered ? '#27ae60' : '#e67e22' }}>{order.isDelivered ? 'Delivered' : 'Pending'}</span></td>
-                <td style={styles.td}>
-                  {order.isPaid && !order.isDelivered && (
-                    <button style={styles.deliverBtn} onClick={() => deliverHandler(order._id)}>
-                      Mark Delivered
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="page-wrapper">
+      <Toaster position="bottom-right" toastOptions={{ style: { fontFamily: 'DM Sans, sans-serif', fontSize: '0.9rem' } }} />
+
+      <div className="page-header">
+        <p className="page-header__eyebrow">Admin</p>
+        <h1 className="page-header__title">All Orders</h1>
+        <p className="page-header__subtitle">{!loading && `${orders.length} total orders`}</p>
       </div>
+
+      {loading ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="skeleton" style={{ height: '56px', borderRadius: 'var(--radius-md)' }} />
+          ))}
+        </div>
+      ) : orders.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-state__icon">📋</div>
+          <p className="empty-state__title">No orders yet</p>
+        </div>
+      ) : (
+        <div className="table-wrapper">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Total</th>
+                <th>Payment</th>
+                <th>Delivery</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map(order => (
+                <tr key={order._id}>
+                  <td><span className="mono">{order._id.slice(-8).toUpperCase()}</span></td>
+                  <td>
+                    <div style={{ fontWeight: 500, fontSize: '0.88rem' }}>{order.user?.name || 'Unknown'}</div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{order.user?.email}</div>
+                  </td>
+                  <td>{new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                  <td style={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>₹{order.totalPrice.toLocaleString('en-IN')}</td>
+                  <td>
+                    <span className={`badge ${order.isPaid ? 'badge-success' : 'badge-pending'}`}>
+                      {order.isPaid ? 'Paid' : 'Pending'}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`badge ${order.isDelivered ? 'badge-success' : 'badge-neutral'}`}>
+                      {order.isDelivered ? 'Delivered' : 'Processing'}
+                    </span>
+                  </td>
+                  <td>
+                    {!order.isDelivered && order.isPaid && (
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => markDelivered(order._id)}
+                      >
+                        Mark Delivered
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
-}
-
-const styles = {
-  page: { padding: 'clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 2rem)' },
-  heading: { fontSize: 'clamp(1.3rem, 3vw, 2rem)', marginBottom: '1.5rem' },
-  tableWrapper: { overflowX: 'auto' },
-  table: { width: '100%', borderCollapse: 'collapse', backgroundColor: '#fff', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' },
-  th: { textAlign: 'left', padding: 'clamp(0.6rem, 1.5vw, 0.85rem) clamp(0.75rem, 2vw, 1rem)', backgroundColor: '#222', color: '#fff', fontSize: 'clamp(0.8rem, 1.8vw, 0.9rem)', whiteSpace: 'nowrap' },
-  row: { borderBottom: '1px solid #f0f0f0' },
-  td: { padding: 'clamp(0.6rem, 1.5vw, 0.85rem) clamp(0.75rem, 2vw, 1rem)', fontSize: 'clamp(0.78rem, 1.8vw, 0.9rem)', color: '#333', verticalAlign: 'middle' },
-  id: { fontFamily: 'monospace', fontSize: 'clamp(0.7rem, 1.5vw, 0.8rem)', color: '#666' },
-  email: { fontSize: 'clamp(0.7rem, 1.5vw, 0.8rem)', color: '#888' },
-  badge: { color: '#fff', padding: '2px 10px', borderRadius: '12px', fontSize: 'clamp(0.7rem, 1.5vw, 0.8rem)', whiteSpace: 'nowrap' },
-  deliverBtn: { backgroundColor: '#2980b9', color: '#fff', border: 'none', padding: '0.3rem 0.75rem', borderRadius: '4px', cursor: 'pointer', fontSize: 'clamp(0.75rem, 1.8vw, 0.85rem)', whiteSpace: 'nowrap' },
-  center: { textAlign: 'center', marginTop: '2rem' },
 }
 
 export default AdminOrders
