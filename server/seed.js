@@ -7,9 +7,9 @@
  * sample products across all 6 categories with real Unsplash images.
  */
 
-import dotenv from 'dotenv'
-import mongoose from 'mongoose'
-import Product from './models/productModel.js'
+const dotenv = require('dotenv')
+const mongoose = require('mongoose')
+const Product = require('./models/Product.js')
 
 dotenv.config()
 
