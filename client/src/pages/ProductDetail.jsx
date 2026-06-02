@@ -4,6 +4,12 @@ import axios from '../api/axios'
 import toast, { Toaster } from 'react-hot-toast'
 import { useCart } from '../context/CartContext'
 
+const BackIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+  </svg>
+)
+
 const ProductDetail = () => {
   const { id } = useParams()
   const [product, setProduct] = useState(null)
@@ -27,32 +33,58 @@ const ProductDetail = () => {
     fetch()
   }, [id])
 
-  if (loading) return <p style={styles.center}>Loading...</p>
+  if (loading) {
+    return (
+      <div className="detail-page">
+        <div style={{ display: 'flex', gap: '3rem', flexWrap: 'wrap' }}>
+          <div className="skeleton" style={{ width: 'clamp(280px, 45vw, 520px)', aspectRatio: '4/3', borderRadius: 'var(--radius-xl)' }} />
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: '280px' }}>
+            {[80, 40, 60, 100, 50].map((w, i) => (
+              <div key={i} className="skeleton" style={{ height: '1.5rem', width: `${w}%`, borderRadius: 'var(--radius-sm)' }} />
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (!product) return null
 
   return (
-    <div style={styles.page}>
-      <Toaster />
-      <button onClick={() => navigate('/')} style={styles.back}>← Back</button>
-      <div style={styles.container}>
+    <div className="detail-page">
+      <Toaster position="bottom-right" toastOptions={{ style: { fontFamily: 'DM Sans, sans-serif', fontSize: '0.9rem' } }} />
+
+      <button onClick={() => navigate('/')} className="detail-back">
+        <BackIcon /> Back to store
+      </button>
+
+      <div className="detail-layout">
         <img
-          src={product.image || 'https://placehold.co/500x400'}
+          src={product.image || 'https://placehold.co/520x400/f5f0ea/c4a882?text=No+Image'}
           alt={product.name}
-          style={styles.image}
+          className="detail-image"
         />
-        <div style={styles.info}>
-          <h1 style={styles.name}>{product.name}</h1>
-          <p style={styles.category}>{product.category}</p>
-          <p style={styles.price}>₹{product.price.toLocaleString()}</p>
-          <p style={styles.description}>{product.description}</p>
-          <p style={styles.stock}>
-            {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
-          </p>
+
+        <div className="detail-info">
+          <span className="product-card__category">{product.category}</span>
+          <h1 className="detail-name">{product.name}</h1>
+          <p className="detail-price">₹{product.price.toLocaleString('en-IN')}</p>
+          <p className="detail-description">{product.description}</p>
+
+          <div>
+            {product.stock > 0 ? (
+              <span className="badge badge-success">✓ In Stock ({product.stock} available)</span>
+            ) : (
+              <span className="badge badge-danger">Out of Stock</span>
+            )}
+          </div>
+
           {product.stock > 0 && (
-            <div style={styles.qtyRow}>
-              <label style={styles.label}>Quantity:</label>
+            <div className="detail-qty-row">
+              <label className="form-label" style={{ margin: 0 }}>Quantity</label>
               <select
-                style={styles.select}
+                className="select-field"
+                style={{ width: 'auto' }}
                 value={quantity}
                 onChange={e => setQuantity(Number(e.target.value))}
               >
@@ -62,12 +94,13 @@ const ProductDetail = () => {
               </select>
             </div>
           )}
+
           <button
-            style={{ ...styles.button, opacity: product.stock === 0 ? 0.5 : 1 }}
+            className="btn btn-primary btn-lg"
             disabled={product.stock === 0}
-            onClick={() => { addToCart(product, quantity); toast.success('Added to cart') }}
+            onClick={() => { addToCart(product, quantity); toast.success('Added to cart!') }}
           >
-            Add to Cart
+            {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
           </button>
         </div>
       </div>
@@ -75,22 +108,4 @@ const ProductDetail = () => {
   )
 }
 
-const styles = {
-  page: { padding: 'clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 2rem)' },
-  back: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 'clamp(0.85rem, 2vw, 1rem)', marginBottom: '1rem', padding: 0 },
-  container: { display: 'flex', gap: 'clamp(1.5rem, 4vw, 3rem)', flexWrap: 'wrap' },
-  image: { width: 'clamp(280px, 45vw, 500px)', height: 'clamp(220px, 35vw, 400px)', objectFit: 'cover', borderRadius: '8px' },
-  info: { flex: 1, minWidth: '250px', display: 'flex', flexDirection: 'column', gap: '0.75rem' },
-  name: { margin: 0, fontSize: 'clamp(1.3rem, 3vw, 2rem)' },
-  category: { margin: 0, color: '#888', fontSize: 'clamp(0.8rem, 2vw, 0.95rem)' },
-  price: { margin: 0, fontSize: 'clamp(1.2rem, 3vw, 1.6rem)', fontWeight: 'bold', color: '#222' },
-  description: { margin: 0, fontSize: 'clamp(0.85rem, 2vw, 1rem)', color: '#444', lineHeight: 1.6 },
-  stock: { margin: 0, color: '#27ae60', fontSize: 'clamp(0.8rem, 2vw, 0.95rem)' },
-  qtyRow: { display: 'flex', alignItems: 'center', gap: '1rem' },
-  label: { fontSize: 'clamp(0.85rem, 2vw, 1rem)' },
-  select: { padding: '0.4rem 0.6rem', fontSize: 'clamp(0.85rem, 2vw, 1rem)', borderRadius: '4px', border: '1px solid #ddd' },
-  button: { padding: 'clamp(0.6rem, 1.5vw, 0.75rem) clamp(1rem, 3vw, 1.5rem)', backgroundColor: '#222', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: 'clamp(0.85rem, 2vw, 1rem)', width: 'fit-content' },
-  center: { textAlign: 'center', marginTop: '2rem' },
-}
-
-export default ProductDetail
+export default ProductDetail
