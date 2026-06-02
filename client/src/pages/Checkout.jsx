@@ -38,7 +38,6 @@ const Checkout = () => {
         quantity: item.quantity,
       }))
 
-      // Step 1: Create order in DB with pending_payment status
       const { data: order } = await axios.post('/orders', {
         orderItems,
         shippingAddress: { address, city, postalCode, state },
@@ -46,7 +45,6 @@ const Checkout = () => {
         totalPrice,
       })
 
-      // Step 2: Create Razorpay payment order
       const { data: razorpayOrder } = await axios.post('/payment/create-order', { totalPrice })
 
       const loaded = await loadRazorpay()
@@ -60,19 +58,17 @@ const Checkout = () => {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: razorpayOrder.amount,
         currency: 'INR',
-        name: 'ShopEasy',
+        name: 'Vendora',
         description: 'Order Payment',
         order_id: razorpayOrder.id,
         handler: async (response) => {
           try {
-            // Step 3: Verify payment
             await axios.post('/payment/verify', {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
             })
 
-            // Step 4: Mark order as paid
             await axios.put(`/orders/${order._id}/pay`, {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
@@ -80,14 +76,14 @@ const Checkout = () => {
             })
 
             clearCart()
-            toast.success('Payment successful')
+            toast.success('Payment successful!')
             navigate(`/order/${order._id}`)
           } catch {
             toast.error('Payment verification failed')
           }
         },
         prefill: { name: user.name, email: user.email },
-        theme: { color: '#222222' },
+        theme: { color: '#c2714f' },
       }
 
       const rzp = new window.Razorpay(options)
@@ -105,31 +101,100 @@ const Checkout = () => {
   }
 
   return (
-    <div style={styles.page}>
-      <Toaster />
-      <h1 style={styles.heading}>Checkout</h1>
-      <div style={styles.layout}>
-        <form onSubmit={submitHandler} style={styles.form}>
-          <h2 style={styles.subheading}>Shipping Address</h2>
-          <input style={styles.input} placeholder="Address" value={address} onChange={e => setAddress(e.target.value)} required />
-          <input style={styles.input} placeholder="City" value={city} onChange={e => setCity(e.target.value)} required />
-          <input style={styles.input} placeholder="State" value={state} onChange={e => setState(e.target.value)} required />
-          <input style={styles.input} placeholder="Postal Code" value={postalCode} onChange={e => setPostalCode(e.target.value)} required />
-          <button style={styles.button} type="submit" disabled={loading}>
-            {loading ? 'Processing...' : `Pay ₹${totalPrice.toLocaleString()}`}
-          </button>
-        </form>
-        <div style={styles.summary}>
-          <h2 style={styles.subheading}>Order Summary</h2>
-          {cartItems.map(item => (
-            <div key={item.product} style={styles.summaryItem}>
-              <span>{item.name} × {item.quantity}</span>
-              <span>₹{(item.price * item.quantity).toLocaleString()}</span>
+    <div className="page-wrapper">
+      <Toaster position="bottom-right" toastOptions={{ style: { fontFamily: 'DM Sans, sans-serif', fontSize: '0.9rem' } }} />
+
+      <div className="page-header">
+        <h1 className="page-header__title">Checkout</h1>
+      </div>
+
+      <div className="split-layout">
+        {/* Shipping Form */}
+        <div className="split-layout__main">
+          <form onSubmit={submitHandler} className="admin-form">
+            <h2 className="heading-sm">Shipping Address</h2>
+            <hr className="divider" />
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="checkout-address">Street Address</label>
+              <input
+                id="checkout-address"
+                className="input-field"
+                placeholder="123 Main Street"
+                value={address}
+                onChange={e => setAddress(e.target.value)}
+                autoComplete="street-address"
+                required
+              />
             </div>
-          ))}
-          <div style={styles.summaryTotal}>
-            <span>Total</span>
-            <span>₹{totalPrice.toLocaleString()}</span>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="checkout-city">City</label>
+                <input
+                  id="checkout-city"
+                  className="input-field"
+                  placeholder="Mumbai"
+                  value={city}
+                  onChange={e => setCity(e.target.value)}
+                  autoComplete="address-level2"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="checkout-state">State</label>
+                <input
+                  id="checkout-state"
+                  className="input-field"
+                  placeholder="Maharashtra"
+                  value={state}
+                  onChange={e => setState(e.target.value)}
+                  autoComplete="address-level1"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-group" style={{ maxWidth: '200px' }}>
+              <label className="form-label" htmlFor="checkout-postal">Postal Code</label>
+              <input
+                id="checkout-postal"
+                className="input-field"
+                placeholder="400001"
+                value={postalCode}
+                onChange={e => setPostalCode(e.target.value)}
+                autoComplete="postal-code"
+                inputMode="numeric"
+                required
+              />
+            </div>
+
+            <button
+              className="btn btn-primary btn-lg"
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? 'Processing…' : `Pay ₹${totalPrice.toLocaleString('en-IN')}`}
+            </button>
+          </form>
+        </div>
+
+        {/* Order Summary */}
+        <div className="split-layout__aside">
+          <div className="order-summary-card">
+            <h2 className="heading-sm">Order Summary</h2>
+            <hr className="divider" />
+            {cartItems.map(item => (
+              <div key={item.product} className="order-summary-row">
+                <span className="truncate" style={{ maxWidth: '160px' }}>{item.name} × {item.quantity}</span>
+                <span style={{ flexShrink: 0 }}>₹{(item.price * item.quantity).toLocaleString('en-IN')}</span>
+              </div>
+            ))}
+            <hr className="divider" />
+            <div className="order-summary-row--total">
+              <span>Total</span>
+              <span>₹{totalPrice.toLocaleString('en-IN')}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -137,17 +202,4 @@ const Checkout = () => {
   )
 }
 
-const styles = {
-  page: { padding: 'clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 2rem)' },
-  heading: { fontSize: 'clamp(1.3rem, 3vw, 2rem)', marginBottom: '1.5rem' },
-  layout: { display: 'flex', gap: 'clamp(1rem, 3vw, 2rem)', flexWrap: 'wrap', alignItems: 'flex-start' },
-  form: { flex: 2, minWidth: '280px', display: 'flex', flexDirection: 'column', gap: '1rem', backgroundColor: '#fff', padding: 'clamp(1rem, 3vw, 1.5rem)', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' },
-  subheading: { margin: 0, fontSize: 'clamp(1rem, 2.5vw, 1.2rem)' },
-  input: { padding: 'clamp(0.5rem, 1.5vw, 0.75rem)', fontSize: 'clamp(0.85rem, 2vw, 1rem)', border: '1px solid #ddd', borderRadius: '4px', outline: 'none' },
-  button: { padding: 'clamp(0.6rem, 1.5vw, 0.75rem)', backgroundColor: '#222', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: 'clamp(0.85rem, 2vw, 1rem)' },
-  summary: { flex: 1, minWidth: '220px', backgroundColor: '#fff', padding: 'clamp(1rem, 3vw, 1.5rem)', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.07)', display: 'flex', flexDirection: 'column', gap: '0.75rem' },
-  summaryItem: { display: 'flex', justifyContent: 'space-between', fontSize: 'clamp(0.8rem, 2vw, 0.95rem)', color: '#444' },
-  summaryTotal: { display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: 'clamp(0.9rem, 2vw, 1rem)', borderTop: '1px solid #eee', paddingTop: '0.75rem', marginTop: '0.25rem' },
-}
-
-export default Checkout
+export default Checkout

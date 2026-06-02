@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import axios from '../api/axios'
 
+const CheckIcon = () => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+)
+
 const OrderConfirmation = () => {
   const { id } = useParams()
   const [order, setOrder] = useState(null)
@@ -22,45 +28,78 @@ const OrderConfirmation = () => {
     fetch()
   }, [id])
 
-  if (loading) return <p style={styles.center}>Loading...</p>
+  if (loading) return (
+    <div className="confirm-page">
+      <div className="confirm-card">
+        {[100, 60, 80, 40].map((w, i) => (
+          <div key={i} className="skeleton" style={{ height: '1.4rem', width: `${w}%`, borderRadius: 'var(--radius-sm)' }} />
+        ))}
+      </div>
+    </div>
+  )
+
   if (!order) return null
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <h1 style={styles.heading}>✓ Order Placed</h1>
-        <p style={styles.orderId}>Order ID: <strong>{order._id}</strong></p>
-        <p style={styles.status}>Payment: <span style={{ color: order.isPaid ? '#27ae60' : '#e74c3c' }}>{order.isPaid ? 'Paid' : 'Pending'}</span></p>
-        <h2 style={styles.subheading}>Items</h2>
-        {order.orderItems.map((item, i) => (
-          <div key={i} style={styles.item}>
-            <span>{item.name} × {item.quantity}</span>
-            <span>₹{(item.price * item.quantity).toLocaleString()}</span>
+    <div className="confirm-page">
+      <div className="confirm-card">
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+          <div className="confirm-check">
+            <CheckIcon />
           </div>
-        ))}
-        <div style={styles.total}>
-          <span>Total</span>
-          <span>₹{order.totalPrice.toLocaleString()}</span>
+          <div>
+            <h1 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>Order Placed!</h1>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontFamily: 'monospace', marginTop: '2px' }}>#{order._id}</p>
+          </div>
         </div>
-        <h2 style={styles.subheading}>Shipping</h2>
-        <p style={styles.address}>{order.shippingAddress.address}, {order.shippingAddress.city}, {order.shippingAddress.state} - {order.shippingAddress.postalCode}</p>
-        <button style={styles.button} onClick={() => navigate('/')}>Continue Shopping</button>
+
+        <hr className="confirm-divider" />
+
+        {/* Payment & Delivery status */}
+        <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+          <span className={`badge ${order.isPaid ? 'badge-success' : 'badge-pending'}`}>
+            {order.isPaid ? '✓ Paid' : '⏳ Payment Pending'}
+          </span>
+          <span className={`badge ${order.isDelivered ? 'badge-success' : 'badge-neutral'}`}>
+            {order.isDelivered ? '✓ Delivered' : 'Processing'}
+          </span>
+        </div>
+
+        <hr className="confirm-divider" />
+
+        {/* Items */}
+        <div>
+          <p className="form-label" style={{ marginBottom: 'var(--space-3)' }}>Items Ordered</p>
+          {order.orderItems.map((item, i) => (
+            <div key={i} className="confirm-row" style={{ marginBottom: 'var(--space-2)' }}>
+              <span>{item.name} <span className="text-muted">× {item.quantity}</span></span>
+              <span style={{ fontWeight: 600 }}>₹{(item.price * item.quantity).toLocaleString('en-IN')}</span>
+            </div>
+          ))}
+          <div className="confirm-row--total">
+            <span>Total Paid</span>
+            <span>₹{order.totalPrice.toLocaleString('en-IN')}</span>
+          </div>
+        </div>
+
+        <hr className="confirm-divider" />
+
+        {/* Shipping */}
+        <div>
+          <p className="form-label" style={{ marginBottom: 'var(--space-2)' }}>Shipping To</p>
+          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+            {order.shippingAddress.address}, {order.shippingAddress.city},<br />
+            {order.shippingAddress.state} — {order.shippingAddress.postalCode}
+          </p>
+        </div>
+
+        <button className="btn btn-primary btn-lg" onClick={() => navigate('/')}>
+          Continue Shopping
+        </button>
       </div>
     </div>
   )
 }
 
-const styles = {
-  page: { display: 'flex', justifyContent: 'center', padding: 'clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 2rem)' },
-  card: { backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 2px 12px rgba(0,0,0,0.08)', padding: 'clamp(1.5rem, 4vw, 2.5rem)', width: 'clamp(280px, 90vw, 600px)', display: 'flex', flexDirection: 'column', gap: '0.75rem' },
-  heading: { margin: 0, fontSize: 'clamp(1.3rem, 3vw, 1.8rem)', color: '#27ae60' },
-  orderId: { margin: 0, fontSize: 'clamp(0.75rem, 1.8vw, 0.9rem)', color: '#666', wordBreak: 'break-all' },
-  status: { margin: 0, fontSize: 'clamp(0.85rem, 2vw, 1rem)' },
-  subheading: { margin: '0.5rem 0 0', fontSize: 'clamp(0.95rem, 2.5vw, 1.1rem)' },
-  item: { display: 'flex', justifyContent: 'space-between', fontSize: 'clamp(0.8rem, 2vw, 0.95rem)', color: '#444' },
-  total: { display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', borderTop: '1px solid #eee', paddingTop: '0.75rem', fontSize: 'clamp(0.9rem, 2vw, 1rem)' },
-  address: { margin: 0, fontSize: 'clamp(0.8rem, 2vw, 0.95rem)', color: '#555' },
-  button: { marginTop: '0.5rem', padding: 'clamp(0.6rem, 1.5vw, 0.75rem)', backgroundColor: '#222', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: 'clamp(0.85rem, 2vw, 1rem)' },
-}
-
-export default OrderConfirmation
+export default OrderConfirmation
