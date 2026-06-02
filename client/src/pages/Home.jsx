@@ -8,7 +8,7 @@ const CATEGORIES = ['all', 'Electronics', 'Clothing', 'Books', 'Home', 'Sports',
 
 const SearchIcon = () => (
   <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
   </svg>
 )
 
@@ -53,7 +53,6 @@ const Home = () => {
 
       {/* Hero */}
       <div className="home-hero">
-        <span className="home-hero__tagline">Curated for you</span>
         <h1 className="home-hero__title">Discover Something You'll Love</h1>
         <p className="home-hero__sub">Premium products across every category, delivered to your door.</p>
       </div>
@@ -142,4 +141,4 @@ const Home = () => {
   )
 }
 
-export default Home
+export default Home
