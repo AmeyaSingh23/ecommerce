@@ -1,4 +1,6 @@
 const Product = require('../models/Product');
+const fs = require('fs').promises;
+const path = require('path');
 
 // GET /api/products
 const getProducts = async (req, res) => {
@@ -58,8 +60,22 @@ const updateProduct = async (req, res) => {
 // DELETE /api/products/:id
 const deleteProduct = async (req, res) => {
   try {
-    const deleted = await Product.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ message: 'Product not found' });
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+
+    if (product.image && product.image.startsWith('/uploads/')) {
+      const filePath = path.join(__dirname, '..', product.image);
+      try {
+        await fs.unlink(filePath);
+      } catch (fsErr) {
+        if (fsErr.code !== 'ENOENT') {
+          console.error('Failed to delete image file:', fsErr.message);
+        }
+        // ENOENT = file already gone, safe to ignore
+      }
+    }
+
+    await Product.findByIdAndDelete(req.params.id);
     res.json({ message: 'Product deleted' });
   } catch (err) {
     res.status(500).json({ message: err.message });
