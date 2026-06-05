@@ -107,7 +107,9 @@ const ProductDetail = () => {
         <img
           src={
             product.image
-              ? `http://localhost:5000${product.image}`
+              ? product.image.startsWith('http')
+                ? product.image
+                : `http://localhost:5000${product.image}`
               : 'https://placehold.co/520x400/f5f0ea/c4a882?text=No+Image'
           }
           alt={product.name}

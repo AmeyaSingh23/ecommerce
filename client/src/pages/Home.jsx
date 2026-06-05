@@ -103,7 +103,13 @@ const Home = () => {
               <article key={product._id} className="product-card">
                 <div className="product-card__image-wrap">
                   <img
-                    src={product.image || 'https://placehold.co/400x300/f5f0ea/c4a882?text=No+Image'}
+                    src={
+                      product.image
+                        ? product.image.startsWith('http')
+                          ? product.image
+                          : `http://localhost:5000${product.image}`
+                        : 'https://placehold.co/400x300/f5f0ea/c4a882?text=No+Image'
+                    }
                     alt={product.name}
                     className="product-card__image"
                     onClick={() => navigate(`/product/${product._id}`)}
