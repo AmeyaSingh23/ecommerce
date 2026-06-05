@@ -1533,3 +1533,15 @@ textarea.input-field {
   color: var(--text-secondary);
   font-size: 0.9rem;
 }
+
+/* =========================================================
+   26. IMAGE UPLOAD PREVIEW
+   ========================================================= */
+.upload-preview {
+  margin-top: var(--space-3);
+  width: 120px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}

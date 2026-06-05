@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 const productRoutes = require('./routes/productRoutes');
 const authRoutes = require('./routes/authRoutes');
 const orderRoutes = require('./routes/orderRoutes');
@@ -15,6 +16,7 @@ app.use(cors({
   origin: process.env.CLIENT_URL || '*',
 }))
 app.use(express.json()); // parses incoming JSON request bodies
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Test route
 app.get('/', (req, res) => {

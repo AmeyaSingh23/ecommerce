@@ -105,7 +105,11 @@ const ProductDetail = () => {
 
       <div className="detail-layout">
         <img
-          src={product.image || 'https://placehold.co/520x400/f5f0ea/c4a882?text=No+Image'}
+          src={
+            product.image
+              ? `http://localhost:5000${product.image}`
+              : 'https://placehold.co/520x400/f5f0ea/c4a882?text=No+Image'
+          }
           alt={product.name}
           className="detail-image"
         />

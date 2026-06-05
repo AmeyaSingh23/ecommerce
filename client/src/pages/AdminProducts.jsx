@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import axios from '../api/axios'
 import toast, { Toaster } from 'react-hot-toast'
 
-const initialForm = { name: '', description: '', price: '', category: '', stock: '', image: '' }
+const initialForm = { name: '', description: '', price: '', category: '', stock: '', imageFile: null }
 const CATEGORIES = ['Electronics', 'Clothing', 'Books', 'Home', 'Sports', 'Other']
 
 const AdminProducts = () => {
@@ -33,10 +33,24 @@ const AdminProducts = () => {
     }
     setSubmitting(true)
     try {
+      let imageUrl = ''
+
+      if (form.imageFile) {
+        const formData = new FormData()
+        formData.append('image', form.imageFile)
+        const { data: uploadData } = await axios.post('/products/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
+        imageUrl = uploadData.imageUrl
+      }
+
       await axios.post('/products', {
-        ...form,
+        name: form.name,
+        description: form.description,
         price: Number(form.price),
         stock: Number(form.stock),
+        category: form.category,
+        image: imageUrl,
       })
       toast.success('Product created')
       setForm(initialForm)
@@ -108,9 +122,20 @@ const AdminProducts = () => {
               onChange={e => setForm(prev => ({ ...prev, stock: e.target.value }))} required />
           </div>
           <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-            <label className="form-label">Image URL <span className="text-muted">(optional)</span></label>
-            <input className="input-field" type="text" placeholder="https://..." value={form.image}
-              onChange={e => setForm(prev => ({ ...prev, image: e.target.value }))} />
+            <label className="form-label">Product Image <span className="text-muted">(optional, max 5MB)</span></label>
+            <input
+              className="input-field"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={e => setForm(prev => ({ ...prev, imageFile: e.target.files[0] || null }))}
+            />
+            {form.imageFile && (
+              <img
+                src={URL.createObjectURL(form.imageFile)}
+                alt="preview"
+                className="upload-preview"
+              />
+            )}
           </div>
         </div>
         <div className="form-group">
@@ -170,4 +195,4 @@ const AdminProducts = () => {
   )
 }
 
-export default AdminProducts
+export default AdminProducts
