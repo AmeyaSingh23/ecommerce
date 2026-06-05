@@ -3,11 +3,33 @@ import { useParams, useNavigate } from 'react-router-dom'
 import axios from '../api/axios'
 import toast, { Toaster } from 'react-hot-toast'
 import { useCart } from '../context/CartContext'
+import { useAuth } from '../context/AuthContext'
 
 const BackIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+    <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
   </svg>
+)
+
+const StarIcon = ({ filled }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+  </svg>
+)
+
+const StarRating = ({ value, onChange }) => (
+  <div className="star-rating">
+    {[1, 2, 3, 4, 5].map(star => (
+      <button
+        key={star}
+        type="button"
+        className={`star-btn ${star <= value ? 'star-btn--active' : ''}`}
+        onClick={() => onChange && onChange(star)}
+      >
+        <StarIcon filled={star <= value} />
+      </button>
+    ))}
+  </div>
 )
 
 const ProductDetail = () => {
@@ -15,23 +37,44 @@ const ProductDetail = () => {
   const [product, setProduct] = useState(null)
   const [quantity, setQuantity] = useState(1)
   const [loading, setLoading] = useState(true)
+  const [rating, setRating] = useState(0)
+  const [comment, setComment] = useState('')
+  const [submitting, setSubmitting] = useState(false)
   const { addToCart } = useCart()
+  const { user } = useAuth()
   const navigate = useNavigate()
 
-  useEffect(() => {
-    const fetch = async () => {
-      try {
-        const { data } = await axios.get(`/products/${id}`)
-        setProduct(data)
-      } catch {
-        toast.error('Product not found')
-        navigate('/')
-      } finally {
-        setLoading(false)
-      }
+  const fetchProduct = async () => {
+    try {
+      const { data } = await axios.get(`/products/${id}`)
+      setProduct(data)
+    } catch {
+      toast.error('Product not found')
+      navigate('/')
+    } finally {
+      setLoading(false)
     }
-    fetch()
-  }, [id])
+  }
+
+  useEffect(() => { fetchProduct() }, [id])
+
+  const submitReview = async (e) => {
+    e.preventDefault()
+    if (rating === 0) return toast.error('Please select a star rating')
+    if (!comment.trim()) return toast.error('Please write a comment')
+    setSubmitting(true)
+    try {
+      await axios.post(`/products/${id}/reviews`, { rating, comment })
+      toast.success('Review submitted!')
+      setRating(0)
+      setComment('')
+      fetchProduct() // refresh to show new review + updated avg
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to submit review')
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -49,6 +92,8 @@ const ProductDetail = () => {
   }
 
   if (!product) return null
+
+  const alreadyReviewed = user && product.reviews?.some(r => r.user === user._id)
 
   return (
     <div className="detail-page">
@@ -68,6 +113,14 @@ const ProductDetail = () => {
         <div className="detail-info">
           <span className="product-card__category">{product.category}</span>
           <h1 className="detail-name">{product.name}</h1>
+
+          <div className="detail-rating-row">
+            <StarRating value={Math.round(product.rating)} />
+            <span className="detail-rating-text">
+              {product.rating > 0 ? product.rating.toFixed(1) : 'No ratings'} · {product.numReviews} {product.numReviews === 1 ? 'review' : 'reviews'}
+            </span>
+          </div>
+
           <p className="detail-price">₹{product.price.toLocaleString('en-IN')}</p>
           <p className="detail-description">{product.description}</p>
 
@@ -104,8 +157,67 @@ const ProductDetail = () => {
           </button>
         </div>
       </div>
+
+      {/* ── Reviews Section ── */}
+      <div className="reviews-section">
+        <h2 className="reviews-heading">Customer Reviews</h2>
+        <hr className="divider" />
+
+        {product.reviews?.length === 0 && (
+          <p className="reviews-empty">No reviews yet. Be the first!</p>
+        )}
+
+        <div className="reviews-list">
+          {product.reviews?.map(review => (
+            <div key={review._id} className="review-card">
+              <div className="review-card__header">
+                <span className="review-card__author">{review.name}</span>
+                <StarRating value={review.rating} />
+                <span className="review-card__date">
+                  {new Date(review.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </span>
+              </div>
+              <p className="review-card__comment">{review.comment}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Submit form — only for logged-in users who haven't reviewed yet */}
+        {user ? (
+          alreadyReviewed ? (
+            <p className="reviews-already-done">You have already reviewed this product.</p>
+          ) : (
+            <div className="review-form-wrapper">
+              <h3 className="review-form__title">Write a Review</h3>
+              <form onSubmit={submitReview} className="review-form">
+                <div className="form-group">
+                  <label className="form-label">Your Rating</label>
+                  <StarRating value={rating} onChange={setRating} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Comment</label>
+                  <textarea
+                    className="input-field"
+                    rows={4}
+                    placeholder="Share your experience with this product..."
+                    value={comment}
+                    onChange={e => setComment(e.target.value)}
+                  />
+                </div>
+                <button className="btn btn-primary" type="submit" disabled={submitting}>
+                  {submitting ? 'Submitting...' : 'Submit Review'}
+                </button>
+              </form>
+            </div>
+          )
+        ) : (
+          <p className="reviews-login-prompt">
+            <button className="btn-link" onClick={() => navigate('/login')}>Log in</button> to leave a review.
+          </p>
+        )}
+      </div>
     </div>
   )
 }
 
-export default ProductDetail
+export default ProductDetail
