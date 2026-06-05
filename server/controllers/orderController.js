@@ -1,4 +1,5 @@
 const Order = require('../models/Order');
+const Product = require('../models/Product');
 
 // POST /api/orders
 const createOrder = async (req, res) => {
@@ -79,6 +80,14 @@ const updateOrderToPaid = async (req, res) => {
     }
 
     const updated = await order.save()
+
+    // Decrement stock for each item in the order
+    for (const item of order.orderItems) {
+      await Product.findByIdAndUpdate(item.product, {
+        $inc: { stock: -item.quantity }
+      })
+    }
+
     res.json(updated)
   } catch (err) {
     res.status(500).json({ message: err.message })
