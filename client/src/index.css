@@ -733,7 +733,7 @@ textarea.input-field {
 .navbar__links {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--space-4);
 }
 
 .navbar__link {
@@ -1544,4 +1544,17 @@ textarea.input-field {
   object-fit: cover;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
+}
+
+.navbar__logout-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  color: var(--text-secondary);
+  padding: 0;
+}
+
+.navbar__logout-btn:hover {
+  color: var(--text-primary);
 }
