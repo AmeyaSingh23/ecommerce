@@ -2,6 +2,49 @@ import { useEffect, useState } from 'react'
 import axios from '../api/axios'
 import toast, { Toaster } from 'react-hot-toast'
 
+const SearchIcon = () => (
+  <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+  </svg>
+)
+
+const ChevronLeft = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="15 18 9 12 15 6" />
+  </svg>
+)
+
+const ChevronRight = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="9 18 15 12 9 6" />
+  </svg>
+)
+
+const Pagination = ({ page, pages, onPageChange }) => {
+  if (pages <= 1) return null
+
+  const getPageNumbers = () => {
+    if (pages <= 7) return Array.from({ length: pages }, (_, i) => i + 1)
+    const nums = [1]
+    if (page > 3) nums.push('...')
+    for (let i = Math.max(2, page - 1); i <= Math.min(pages - 1, page + 1); i++) nums.push(i)
+    if (page < pages - 2) nums.push('...')
+    nums.push(pages)
+    return nums
+  }
+
+  return (
+    <div className="pagination">
+      <button className="pagination__btn" onClick={() => onPageChange(page - 1)} disabled={page === 1}><ChevronLeft /></button>
+      {getPageNumbers().map((num, i) =>
+        num === '...' ? <span key={`ellipsis-${i}`} className="pagination__ellipsis">…</span> :
+        <button key={num} className={`pagination__btn ${page === num ? 'pagination__btn--active' : ''}`} onClick={() => onPageChange(num)}>{num}</button>
+      )}
+      <button className="pagination__btn" onClick={() => onPageChange(page + 1)} disabled={page === pages}><ChevronRight /></button>
+    </div>
+  )
+}
+
 const initialForm = { name: '', description: '', price: '', category: '', stock: '', imageFile: null }
 const CATEGORIES = ['Electronics', 'Clothing', 'Books', 'Home', 'Sports', 'Other']
 
@@ -10,19 +53,39 @@ const AdminProducts = () => {
   const [form, setForm] = useState(initialForm)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [pages, setPages] = useState(1)
+  const [total, setTotal] = useState(0)
 
-  const fetchProducts = async () => {
-    try {
-      const { data } = await axios.get('/products')
-      setProducts(data)
-    } catch {
-      toast.error('Failed to load products')
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    setPage(1)
+  }, [search])
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true)
+      try {
+        const { data } = await axios.get('/products', {
+          params: { search, page }
+        })
+        setProducts(data.products || data)
+        setPages(data.pages || 1)
+        setTotal(data.total || 0)
+      } catch {
+        toast.error('Failed to load products')
+      } finally {
+        setLoading(false)
+      }
     }
-  }
+    const debounce = setTimeout(fetchProducts, 400)
+    return () => clearTimeout(debounce)
+  }, [search, page])
 
-  useEffect(() => { fetchProducts() }, [])
+  const handlePageChange = (newPage) => {
+    setPage(newPage)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   const submitHandler = async (e) => {
     e.preventDefault()
@@ -150,7 +213,23 @@ const AdminProducts = () => {
         </div>
       </form>
 
-      {/* Products Table */}
+      <hr className="divider" style={{ margin: 'var(--space-8) 0' }} />
+
+      {/* Products Table Area */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
+        <h2 className="heading-sm">Existing Products ({total})</h2>
+        <div className="input-with-icon" style={{ width: '300px' }}>
+          <SearchIcon />
+          <input
+            className="input-field"
+            type="text"
+            placeholder="Search products…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
+      </div>
+
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
           {Array.from({ length: 5 }).map((_, i) => (
@@ -158,6 +237,7 @@ const AdminProducts = () => {
           ))}
         </div>
       ) : (
+        <>
         <div className="table-wrapper">
           <table className="data-table">
             <thead>
@@ -190,6 +270,8 @@ const AdminProducts = () => {
             </tbody>
           </table>
         </div>
+        <Pagination page={page} pages={pages} onPageChange={handlePageChange} />
+        </>
       )}
     </div>
   )

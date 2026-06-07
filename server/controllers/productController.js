@@ -1,6 +1,5 @@
 const Product = require('../models/Product');
-const fs = require('fs').promises;
-const path = require('path');
+const { cloudinary } = require('../middleware/upload');
 
 // GET /api/products
 const PAGE_SIZE = 8;
@@ -66,15 +65,16 @@ const deleteProduct = async (req, res) => {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: 'Product not found' });
 
-    if (product.image && product.image.startsWith('/uploads/')) {
-      const filePath = path.join(__dirname, '..', product.image);
+    // Delete from Cloudinary if it's a cloudinary URL
+    if (product.image && product.image.includes('cloudinary.com')) {
+      // Extract public_id from URL — it's the part after /vendora/ without the extension
+      const parts = product.image.split('/');
+      const filename = parts[parts.length - 1].split('.')[0];
+      const publicId = `vendora/${filename}`;
       try {
-        await fs.unlink(filePath);
-      } catch (fsErr) {
-        if (fsErr.code !== 'ENOENT') {
-          console.error('Failed to delete image file:', fsErr.message);
-        }
-        // ENOENT = file already gone, safe to ignore
+        await cloudinary.uploader.destroy(publicId);
+      } catch (err) {
+        console.error('Cloudinary delete failed:', err.message);
       }
     }
 

@@ -1,22 +1,22 @@
 const multer = require('multer');
-const path = require('path');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
 
-const storage = multer.diskStorage({
-    destination(req, file, cb) {
-        cb(null, 'uploads/');
-    },
-    filename(req, file, cb) {
-        const ext = path.extname(file.originalname);
-        cb(null, `${Date.now()}${ext}`);
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const storage = new CloudinaryStorage({
+    cloudinary,
+    params: {
+        folder: 'vendora',
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+        transformation: [{ width: 800, height: 600, crop: 'limit' }],
     },
 });
 
-const fileFilter = (req, file, cb) => {
-    const allowed = /jpeg|jpg|png|webp/;
-    const valid = allowed.test(path.extname(file.originalname).toLowerCase()) && allowed.test(file.mimetype);
-    valid ? cb(null, true) : cb(new Error('Only image files are allowed'));
-};
+const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
-const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB max
-
-module.exports = upload;
+module.exports = { upload, cloudinary };
