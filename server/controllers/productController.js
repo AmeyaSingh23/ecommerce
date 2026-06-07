@@ -3,26 +3,29 @@ const fs = require('fs').promises;
 const path = require('path');
 
 // GET /api/products
+const PAGE_SIZE = 8;
+
 const getProducts = async (req, res) => {
   try {
-    const { search, category } = req.query
+    const { search, category, page = 1 } = req.query;
 
-    const filter = {}
+    const filter = {};
+    if (search) filter.name = { $regex: search, $options: 'i' };
+    if (category && category !== 'all') filter.category = { $regex: category, $options: 'i' };
 
-    if (search) {
-      filter.name = { $regex: search, $options: 'i' }
-    }
-
-    if (category && category !== 'all') {
-      filter.category = { $regex: category, $options: 'i' }
-    }
+    const currentPage = Number(page);
+    const total = await Product.countDocuments(filter);
+    const pages = Math.ceil(total / PAGE_SIZE);
 
     const products = await Product.find(filter)
-    res.json(products)
+      .skip((currentPage - 1) * PAGE_SIZE)
+      .limit(PAGE_SIZE);
+
+    res.json({ products, page: currentPage, pages, total });
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    res.status(500).json({ message: err.message });
   }
-}
+};
 
 // GET /api/products/:id
 const getProductById = async (req, res) => {
