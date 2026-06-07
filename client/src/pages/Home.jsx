@@ -88,7 +88,7 @@ const Home = () => {
   const [page, setPage] = useState(1)
   const [pages, setPages] = useState(1)
   const [total, setTotal] = useState(0)
-  const { addToCart } = useCart()
+  const { addToCart, cartItems } = useCart()
   const { user } = useAuth()
   const [wishlistIds, setWishlistIds] = useState(new Set())
   const navigate = useNavigate()
@@ -244,13 +244,19 @@ const Home = () => {
                       {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
                     </p>
                     <div className="product-card__footer">
-                      <button
-                        className="btn btn-primary btn-full"
-                        disabled={product.stock === 0}
-                        onClick={() => { addToCart(product); toast.success(`${product.name} added to cart`) }}
-                      >
-                        {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
-                      </button>
+                      {cartItems.some(item => item.product === product._id) ? (
+                        <button className="btn btn-secondary btn-full" onClick={() => navigate('/cart')}>
+                          Go to Cart
+                        </button>
+                      ) : (
+                        <button
+                          className="btn btn-primary btn-full"
+                          disabled={product.stock === 0}
+                          onClick={() => { addToCart(product); toast.success(`${product.name} added to cart`) }}
+                        >
+                          {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </article>

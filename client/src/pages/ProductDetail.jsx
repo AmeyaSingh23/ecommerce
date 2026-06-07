@@ -47,7 +47,7 @@ const ProductDetail = () => {
   const [comment, setComment] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [wishlisted, setWishlisted] = useState(false)
-  const { addToCart } = useCart()
+  const { addToCart, cartItems } = useCart()
   const { user } = useAuth()
   const navigate = useNavigate()
 
@@ -174,7 +174,7 @@ const ProductDetail = () => {
             )}
           </div>
 
-          {product.stock > 0 && (
+          {product.stock > 0 && !cartItems.some(item => item.product === product._id) && (
             <div className="detail-qty-row">
               <label className="form-label" style={{ margin: 0 }}>Quantity</label>
               <select
@@ -190,13 +190,22 @@ const ProductDetail = () => {
             </div>
           )}
 
-          <button
-            className="btn btn-primary btn-lg"
-            disabled={product.stock === 0}
-            onClick={() => { addToCart(product, quantity); toast.success('Added to cart!') }}
-          >
-            {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
-          </button>
+          {cartItems.some(item => item.product === product._id) ? (
+            <button
+              className="btn btn-secondary btn-lg"
+              onClick={() => navigate('/cart')}
+            >
+              Go to Cart
+            </button>
+          ) : (
+            <button
+              className="btn btn-primary btn-lg"
+              disabled={product.stock === 0}
+              onClick={() => { addToCart(product, quantity); toast.success('Added to cart!') }}
+            >
+              {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+            </button>
+          )}
           <button
             className={`btn ${wishlisted ? 'btn-danger' : 'btn-secondary'} wishlist-btn-lg ${wishlisted ? 'wishlist-btn-lg--active' : ''}`}
             onClick={toggleWishlist}

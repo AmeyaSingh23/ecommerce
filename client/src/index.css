@@ -823,6 +823,7 @@ textarea.input-field {
    13. PAGE HEADERS
    ========================================================= */
 .page-header {
+  padding-top: var(--space-8);
   margin-bottom: var(--space-8);
 }
 

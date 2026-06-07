@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import toast, { Toaster } from 'react-hot-toast'
+import axios from '../api/axios'
 
 const Cart = () => {
   const { cartItems, removeFromCart, updateQuantity, clearCart, totalPrice } = useCart()
@@ -15,6 +16,22 @@ const Cart = () => {
       return
     }
     navigate('/checkout')
+  }
+
+  const moveToWishlist = async (item) => {
+    if (!user) return toast.error('Please log in')
+    try {
+      await axios.post(`/wishlist/${item.product}`)
+      removeFromCart(item.product)
+      toast.success(`${item.name} moved to wishlist`)
+    } catch (err) {
+      if (err.response?.data?.message === 'Product already in wishlist') {
+        removeFromCart(item.product)
+        toast.success(`${item.name} moved to wishlist`)
+      } else {
+        toast.error(err.response?.data?.message || 'Failed to move to wishlist')
+      }
+    }
   }
 
   if (cartItems.length === 0) return (
@@ -75,6 +92,13 @@ const Cart = () => {
                 <div className="cart-item__right">
                   <p className="cart-item__subtotal">₹{(item.price * item.quantity).toLocaleString('en-IN')}</p>
                   <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => moveToWishlist(item)}
+                    title="Save for later"
+                  >
+                    Move to Wishlist
+                  </button>
+                  <button
                     className="btn btn-danger btn-sm"
                     onClick={() => removeFromCart(item.product)}
                   >
@@ -117,4 +141,4 @@ const Cart = () => {
   )
 }
 
-export default Cart
+export default Cart

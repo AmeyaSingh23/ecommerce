@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from '../api/axios'
 import toast, { Toaster } from 'react-hot-toast'
+import { useCart } from '../context/CartContext'
 
 const SearchIcon = () => (
     <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -23,6 +24,7 @@ const Wishlist = () => {
     const [search, setSearch] = useState('')
     const [page, setPage] = useState(1)
     const navigate = useNavigate()
+    const { addToCart, cartItems } = useCart()
 
     const fetchWishlist = async () => {
         setLoading(true)
@@ -140,13 +142,19 @@ const Wishlist = () => {
                                         {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
                                     </p>
                                     <div className="product-card__footer" style={{ display: 'flex', gap: 'var(--space-2)' }}>
-                                        <button
-                                            className="btn btn-primary btn-full"
-                                            disabled={product.stock === 0}
-                                            onClick={() => navigate(`/product/${product._id}`)}
-                                        >
-                                            View Product
-                                        </button>
+                                        {cartItems.some(item => item.product === product._id) ? (
+                                            <button className="btn btn-secondary btn-full" onClick={() => navigate('/cart')}>
+                                                Go to Cart
+                                            </button>
+                                        ) : (
+                                            <button
+                                                className="btn btn-primary btn-full"
+                                                disabled={product.stock === 0}
+                                                onClick={() => { addToCart(product); toast.success(`${product.name} added to cart`) }}
+                                            >
+                                                {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                                            </button>
+                                        )}
                                         <button
                                             className="btn btn-danger"
                                             onClick={() => removeFromWishlist(product._id)}
