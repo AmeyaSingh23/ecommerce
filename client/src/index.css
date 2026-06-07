@@ -1614,3 +1614,57 @@ textarea.input-field {
   color: var(--text-secondary);
   margin-bottom: var(--space-4);
 }
+
+/* =========================================================
+   28. WISHLIST
+   ========================================================= */
+.wishlist-btn {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+  opacity: 0;
+}
+
+.product-card:hover .wishlist-btn {
+  opacity: 1;
+}
+
+.wishlist-btn--active {
+  opacity: 1 !important;
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+.wishlist-btn:hover {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+.wishlist-btn-lg {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  border-color: var(--border);
+}
+
+.wishlist-btn-lg--active {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+.wishlist-btn-lg:hover {
+  color: #ef4444;
+  border-color: #ef4444;
+}

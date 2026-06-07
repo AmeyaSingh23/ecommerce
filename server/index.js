@@ -7,6 +7,7 @@ const productRoutes = require('./routes/productRoutes');
 const authRoutes = require('./routes/authRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const wishlistRoutes = require('./routes/wishlistRoutes');
 const startCleanupJob = require('./jobs/cleanupOrders');
 
 const app = express();
@@ -27,6 +28,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/users', authRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/wishlist', wishlistRoutes);
 
 // DB Connection + Start Server
 mongoose.connect(process.env.MONGO_URI)

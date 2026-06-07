@@ -3,12 +3,19 @@ import { useNavigate } from 'react-router-dom'
 import axios from '../api/axios'
 import toast, { Toaster } from 'react-hot-toast'
 import { useCart } from '../context/CartContext'
+import { useAuth } from '../context/AuthContext'
 
 const CATEGORIES = ['all', 'Electronics', 'Clothing', 'Books', 'Home', 'Sports', 'Other']
 
 const SearchIcon = () => (
   <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+  </svg>
+)
+
+const HeartIcon = ({ filled }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
   </svg>
 )
 
@@ -82,6 +89,8 @@ const Home = () => {
   const [pages, setPages] = useState(1)
   const [total, setTotal] = useState(0)
   const { addToCart } = useCart()
+  const { user } = useAuth()
+  const [wishlistIds, setWishlistIds] = useState(new Set())
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -109,6 +118,30 @@ const Home = () => {
     const debounce = setTimeout(fetchProducts, 400)
     return () => clearTimeout(debounce)
   }, [search, category, page])
+
+  useEffect(() => {
+    if (!user) return
+    axios.get('/wishlist').then(({ data }) => {
+      setWishlistIds(new Set(data.map(p => p._id)))
+    }).catch(() => { })
+  }, [user])
+
+  const toggleWishlist = async (e, productId) => {
+    e.stopPropagation()
+    if (!user) return toast.error('Please log in to save to wishlist')
+    const isWishlisted = wishlistIds.has(productId)
+    try {
+      if (isWishlisted) {
+        await axios.delete(`/wishlist/${productId}`)
+        setWishlistIds(prev => { const s = new Set(prev); s.delete(productId); return s })
+      } else {
+        await axios.post(`/wishlist/${productId}`)
+        setWishlistIds(prev => new Set(prev).add(productId))
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to update wishlist')
+    }
+  }
 
   const handlePageChange = (newPage) => {
     setPage(newPage)
@@ -188,6 +221,13 @@ const Home = () => {
                       onClick={() => navigate(`/product/${product._id}`)}
                       loading="lazy"
                     />
+                    <button
+                      className={`wishlist-btn ${wishlistIds.has(product._id) ? 'wishlist-btn--active' : ''}`}
+                      onClick={(e) => toggleWishlist(e, product._id)}
+                      title={wishlistIds.has(product._id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                    >
+                      <HeartIcon filled={wishlistIds.has(product._id)} />
+                    </button>
                   </div>
                   <div className="product-card__body">
                     <span className="product-card__category">{product.category}</span>

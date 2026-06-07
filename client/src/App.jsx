@@ -12,6 +12,7 @@ import MyOrders from './pages/MyOrders'
 import AdminProducts from './pages/AdminProducts'
 import AdminOrders from './pages/AdminOrders'
 import Profile from './pages/Profile'
+import Wishlist from './pages/Wishlist'
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
         <Route path="/admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />
 
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
       </Routes>
     </>
   )
