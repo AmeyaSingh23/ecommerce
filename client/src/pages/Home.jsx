@@ -134,9 +134,11 @@ const Home = () => {
       if (isWishlisted) {
         await axios.delete(`/wishlist/${productId}`)
         setWishlistIds(prev => { const s = new Set(prev); s.delete(productId); return s })
+        toast.success('Removed from wishlist')
       } else {
         await axios.post(`/wishlist/${productId}`)
         setWishlistIds(prev => new Set(prev).add(productId))
+        toast.success('Added to wishlist')
       }
     } catch (err) {
       toast.error(err.response?.data?.message || err.message || 'Failed to update wishlist')

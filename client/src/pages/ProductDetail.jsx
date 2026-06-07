@@ -198,7 +198,7 @@ const ProductDetail = () => {
             {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
           </button>
           <button
-            className={`btn wishlist-btn-lg ${wishlisted ? 'wishlist-btn-lg--active' : ''}`}
+            className={`btn ${wishlisted ? 'btn-danger' : 'btn-secondary'} wishlist-btn-lg ${wishlisted ? 'wishlist-btn-lg--active' : ''}`}
             onClick={toggleWishlist}
           >
             <HeartIcon filled={wishlisted} /> {wishlisted ? 'Wishlisted' : 'Add to Wishlist'}

@@ -641,6 +641,7 @@ textarea.input-field {
 }
 
 .product-card__image-wrap {
+  position: relative;
   overflow: hidden;
 }
 
@@ -1633,10 +1634,6 @@ textarea.input-field {
   cursor: pointer;
   color: var(--text-secondary);
   transition: all 0.15s;
-  opacity: 0;
-}
-
-.product-card:hover .wishlist-btn {
   opacity: 1;
 }
 
@@ -1667,4 +1664,15 @@ textarea.input-field {
 .wishlist-btn-lg:hover {
   color: #ef4444;
   border-color: #ef4444;
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+  border-color: #ef4444;
+  color: #ef4444;
 }
