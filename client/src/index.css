@@ -933,6 +933,11 @@ textarea.input-field {
   border-color: var(--accent);
 }
 
+.pill--active:hover {
+  color: var(--text-on-accent);
+  border-color: var(--accent);
+}
+
 /* =========================================================
    16. SKELETON LOADER
    ========================================================= */
